@@ -1,0 +1,17 @@
+.{
+    .name = .quant_validation_zig,
+    .version = "0.0.1",
+    .fingerprint = 0x1842a90ea274aec5,
+    .minimum_zig_version = "0.16.0",
+    .paths = .{
+        "src",
+        "tests",
+        "build.zig",
+        "build.zig.zon",
+        "README.md",
+        "STATUS.md",
+        "CHANGELOG.md",
+        "LICENSE",
+    },
+    .dependencies = .{},
+}
