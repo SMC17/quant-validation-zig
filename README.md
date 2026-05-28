@@ -8,7 +8,7 @@ Financial Machine Learning* (2018) and the Bailey & López de Prado
 papers on the Probabilistic and Deflated Sharpe Ratios. No backtesting
 harness, no plotting, no surface area beyond what the algorithms need.
 
-## What's in v0.0.1
+## What's in v0.1.0
 
 ### `stats`
 - `mean`, `variance(ddof)`, `stddev(ddof)`
@@ -34,6 +34,15 @@ harness, no plotting, no surface area beyond what the algorithms need.
   K-Fold cross-validation generator (López de Prado AFML §7.4). Returns
   `Fold[]` of `{ train, holdout }` index slices.
 
+### `cpcv`
+- `cpcv(allocator, horizons, k, n_test_groups, embargo)` —
+  Combinatorial Purged Cross-Validation (López de Prado AFML §7.5).
+  Generates `C(k, n_test_groups)` train/test splits reusing the
+  purging + embargo machinery from `purged_cv`. Adjacent fold groups
+  merge into single test blocks so the embargo only fires at the
+  trailing edge of each merged block. Returns the same `Fold[]` shape;
+  free with `purged_cv.freeFolds`.
+
 ## Use
 
 ```zig
@@ -51,11 +60,28 @@ defer qv.purged_cv.freeFolds(allocator, folds);
 for (folds) |f| {
     // train on f.train indices, evaluate on f.holdout indices
 }
+
+// Combinatorial Purged CV: C(K, n_test_groups) paths instead of K
+const paths = try qv.cpcv.cpcv(allocator, horizons, 6, 2, 10);
+defer qv.purged_cv.freeFolds(allocator, paths);
 ```
+
+## Worked example
+
+```
+zig build dsr-demo
+```
+
+100 simulated strategy backtests over a year of trading days, every
+series pure Normal(0, 0.01) noise (true Sharpe = 0). Prints the best
+naive PSR(0) versus the Deflated Sharpe Ratio for the same winner —
+the second number collapses toward 0.5 because the best-of-100
+threshold is re-imposed. Reproduces the AFML §8 / Bailey-López de
+Prado 2014 thesis on selection bias.
 
 ## Tests
 
-22 tests across the three modules. `zig build test` runs both the
+30 tests across the four modules. `zig build test` runs both the
 internal unit tests and the external integration tests in
 `tests/test_reference_numbers.zig`.
 
@@ -63,14 +89,13 @@ Reference numbers are either hand-computed and cross-checked against
 scipy (`norm.cdf`, `norm.ppf`) or constructed so the analytic answer is
 known (e.g. `psr(0, 0, n, 0, 3) == 0.5` for any n).
 
-## What is NOT in v0.0.1
+## What is NOT in v0.1.0
 
 The vocabulary deliberately matches the evidence. This library
 **does not yet** provide:
 
-- Combinatorial Purged Cross-Validation (CPCV) — planned for v0.1
-- Hidden Markov regime detection — planned for v0.1
-- Multiple-testing correction (BH / Bonferroni) — planned for v0.1
+- Multiple-testing correction (BH / Bonferroni) — planned for v0.2
+- Hidden Markov regime detection — planned for v0.2
 - Annualised Sharpe wrappers — caller's responsibility
 - Any backtest execution, slippage, or transaction-cost model
 
