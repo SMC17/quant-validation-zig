@@ -88,3 +88,14 @@ test "sharpeRatio — constant excess returns give large positive SR" {
     const sr = qv.sharpe.sharpeRatio(&rets, 0.0);
     try std.testing.expect(sr > 5.0);
 }
+
+test "cpcv — split count matches C(K, n_test_groups) via public API" {
+    const allocator = std.testing.allocator;
+    var horizons: [24]qv.purged_cv.Range = undefined;
+    for (0..24) |i| horizons[i] = .{ .t0 = @intCast(i), .t1 = @intCast(i + 1) };
+
+    // C(6, 2) = 15
+    const folds = try qv.cpcv.cpcv(allocator, &horizons, 6, 2, 0);
+    defer qv.purged_cv.freeFolds(allocator, folds);
+    try std.testing.expectEqual(@as(usize, 15), folds.len);
+}
