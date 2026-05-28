@@ -29,4 +29,20 @@ pub fn build(b: *std.Build) void {
     });
     const run_ext_tests = b.addRunArtifact(ext_tests);
     test_step.dependOn(&run_ext_tests.step);
+
+    // Worked example — `zig build dsr-demo` runs the DSR collapse
+    // demonstration: 100 noise-only backtests, naive PSR(0) vs DSR.
+    const dsr_demo_mod = b.createModule(.{
+        .root_source_file = b.path("examples/dsr_collapse.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    dsr_demo_mod.addImport("quant_validation", mod);
+    const dsr_demo_exe = b.addExecutable(.{
+        .name = "dsr_collapse",
+        .root_module = dsr_demo_mod,
+    });
+    const run_dsr_demo = b.addRunArtifact(dsr_demo_exe);
+    const dsr_demo_step = b.step("dsr-demo", "Run the DSR collapse worked example");
+    dsr_demo_step.dependOn(&run_dsr_demo.step);
 }
