@@ -89,6 +89,42 @@ test "sharpeRatio — constant excess returns give large positive SR" {
     try std.testing.expect(sr > 5.0);
 }
 
+test "chi2Sf — canonical critical values (α = 0.05 chi-square table)" {
+    // Reference values computed two independent ways: NR3 incomplete-
+    // gamma recurrences in double precision AND the analytic identities
+    // sf(x,1) = erfc(sqrt(x/2)), sf(x,2) = exp(-x/2) via libm
+    // (agreement to ~4e-16 relative). The classic table entries
+    // 3.841 / 5.991 / 23.685 are the rounded α=0.05 critical values
+    // for df = 1, 2, 14 — so sf lands just above 0.05.
+    try std.testing.expectApproxEqRel(@as(f64, 0.050013683763956686), qv.chi2.chi2Sf(3.841, 1), 1e-12);
+    try std.testing.expectApproxEqRel(@as(f64, 0.05001161502657909), qv.chi2.chi2Sf(5.991, 2), 1e-12);
+    try std.testing.expectApproxEqRel(@as(f64, 0.04999712466122488), qv.chi2.chi2Sf(23.685, 14), 1e-12);
+}
+
+test "chi2Sf — deep-tail self-cross-check against this library's own erfc" {
+    // Analytic identity: chi2_sf(x, 1) = erfc(sqrt(x/2)).
+    // sf(1000, 1) ≈ 1.7958e-219 — eleven orders of magnitude below
+    // f64 min normal would be fatal for a naive linear-space gcf;
+    // the log-space evaluation keeps it exact to ~1e-15, and the
+    // repo's own Chebyshev erfc independently agrees to its ~1e-7
+    // relative tail precision.
+    const sf = qv.chi2.chi2Sf(1000.0, 1.0);
+    const via_erfc = qv.stats.erfc(@sqrt(500.0));
+    // Double-precision reference: 1.7958327848007187e-219.
+    try std.testing.expectApproxEqRel(@as(f64, 1.7958327848007187e-219), sf, 1e-12);
+    try std.testing.expectApproxEqRel(sf, via_erfc, 1e-6);
+}
+
+test "contingencyChi2 — public API on a 2x3 hand table" {
+    const allocator = std.testing.allocator;
+    // T = [[20, 30, 50], [30, 40, 30]]: df = 2.
+    const table = [_]f64{ 20, 30, 50, 30, 40, 30 };
+    const r = try qv.chi2.contingencyChi2(allocator, &table, 2, 3);
+    try std.testing.expectApproxEqAbs(@as(f64, 2.0), r.df, 0);
+    // p must satisfy the df=2 analytic identity exp(-X²/2)
+    try std.testing.expectApproxEqRel(@exp(-r.statistic / 2.0), r.p, 1e-12);
+}
+
 test "cpcv — split count matches C(K, n_test_groups) via public API" {
     const allocator = std.testing.allocator;
     var horizons: [24]qv.purged_cv.Range = undefined;

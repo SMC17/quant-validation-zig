@@ -95,6 +95,15 @@ fn erf(z: f64) f64 {
     return if (z >= 0) 1.0 - erfccheb(z) else erfccheb(-z) - 1.0;
 }
 
+// Complementary error function, public so downstream analytic
+// identities can cross-check against it — e.g. chi2_sf(x, 1) =
+// erfc(sqrt(x/2)), exercised in tests/test_reference_numbers.zig.
+// Same NR3 Chebyshev kernel as normCdf; the exp(-z²) factor keeps
+// the deep tail representable (relative precision ~1e-7 there).
+pub fn erfc(z: f64) f64 {
+    return erfccheb(z);
+}
+
 // Inverse standard normal CDF (quantile function) via Acklam's algorithm.
 // Maximum relative error ~1.15e-9 across (0, 1). The version used widely in
 // the literature for PSR/DSR work where higher-than-naive accuracy matters.
