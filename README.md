@@ -53,6 +53,23 @@ Four modules and a worked example (`zig build dsr-demo`).
   trailing edge of each merged block. Returns the same `Fold[]` shape;
   free with `purged_cv.freeFolds`.
 
+### `chi2`
+- `gammln(x)` — log-gamma via NR3 Lanczos coefficients.
+- `gammaP(a, x)` / `gammaQ(a, x)` — regularized incomplete gamma
+  (series for `x < a + 1`, continued fraction otherwise), evaluated
+  with the log-prefactor exp'd at the end so tails as small as
+  ~1e-300 stay representable in f64.
+- `chi2Sf(x, df)` — chi-square survival function `Q(df/2, x/2)`.
+- `contingencyChi2(allocator, table, rows, cols)` — Pearson statistic,
+  `df = (r-1)(c-1)`, and p over an r×c count table; zero marginals
+  error out rather than silently degrading.
+- Cross-validated three ways: reference table values, the analytic
+  identities `sf(x, 1) = erfc(sqrt(x/2))` (against this library's own
+  scipy-validated `stats.erfc`) and `sf(x, 2) = exp(-x/2)`, and a
+  worked reproduction (`zig build repro-lingstats`) that recomputes a
+  documented external chi-square of p ≈ 5.08e-218 from committed
+  contingency data to relative error ~3e-13.
+
 ## What does NOT ship yet
 
 The vocabulary deliberately matches the evidence. This library

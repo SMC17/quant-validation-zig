@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.2.0 — 2026-06-12
+
+### Added
+- `chi2` module: `gammln` (NR3 Lanczos), regularized incomplete gamma
+  `gammaP`/`gammaQ` (gser/gcf with log-space prefactor for deep tails),
+  `chi2Sf(x, df)`, and `contingencyChi2` over r×c count tables.
+- Validation: reference table values; analytic cross-checks
+  `sf(x, 1) = erfc(sqrt(x/2))` against the library's own scipy-validated
+  `erfc` and `sf(x, 2) = exp(-x/2)`; hand-computed 2×2 contingency case.
+- `examples/repro_lingstats.zig` wired as `zig build repro-lingstats`:
+  recomputes a documented external genre×suffix chi-square (15×5 table,
+  df=56) to p = 5.0816e-218, matching the scipy-documented value at
+  relative error 3.3e-13.
+- 10 new tests. Test total: 30 → 40.
+
 ## v0.1.0 — 2026-05-27
 
 ### Added
